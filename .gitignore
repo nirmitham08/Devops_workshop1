@@ -1,7 +1,8 @@
-.venv/
 venv/
+.venv/
 __pycache__/
 *.py[cod]
 .env
-.DS_Store
 todos.db
+.DS_Store
+.vscode/

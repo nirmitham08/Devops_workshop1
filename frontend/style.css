@@ -1,4 +1,4 @@
-```css
+
 * {
     box-sizing: border-box;
 }
@@ -17,14 +17,16 @@ body {
     padding: 25px;
     background: white;
     border-radius: 12px;
-    box-shadow: 0 4px 12px #00000015;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 h1 {
     color: #263238;
     font-size: 36px;
+    text-align: center;
 }
 
+h2,
 h3 {
     color: #607d8b;
 }
@@ -33,6 +35,8 @@ input {
     width: 70%;
     padding: 10px;
     font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
 }
 
 button {
@@ -51,7 +55,7 @@ button:hover {
 li {
     margin: 10px 0;
     padding: 10px;
-    background: #eeeeee;
+    background: #eee;
     border-radius: 5px;
     overflow-wrap: anywhere;
 }
@@ -60,4 +64,3 @@ li {
     color: #607d8b;
     font-weight: bold;
 }
-```

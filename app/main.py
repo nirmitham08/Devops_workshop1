@@ -1,87 +1,60 @@
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from app.database import get_connection
 
-app = FastAPI(title="To-Do Application")
+app = FastAPI(title="To-Do Application API")
+
+# Allow the frontend to communicate with the backend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:8080",
+        "http://127.0.0.1:8080",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+tasks = []
+next_id = 1
 
 
 class TodoCreate(BaseModel):
     title: str
 
 
-def create_table():
-    with get_connection() as conn:
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS todos (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT NOT NULL,
-                completed BOOLEAN NOT NULL DEFAULT 0
-            )
-        """)
-
-
-create_table()
-
-
 @app.get("/")
 def home():
-    return {"message": "To-Do API is running!"}
+    return {"message": "To-Do Application API is running"}
 
 
 @app.get("/todos")
 def get_todos():
-    with get_connection() as conn:
-        rows = conn.execute(
-            "SELECT * FROM todos ORDER BY id"
-        ).fetchall()
-        return [dict(row) for row in rows]
+    return tasks
 
 
-@app.post("/todos")
+@app.post("/todos", status_code=201)
 def add_todo(todo: TodoCreate):
-    title = todo.title.strip()
+    global next_id
 
-    if not title:
-        raise HTTPException(status_code=400, detail="Title cannot be empty")
+    new_task = {
+        "id": next_id,
+        "title": todo.title,
+    }
 
-    with get_connection() as conn:
-        cursor = conn.execute(
-            "INSERT INTO todos (title) VALUES (?)",
-            (title,)
-        )
-        todo_id = cursor.lastrowid
-        row = conn.execute(
-            "SELECT * FROM todos WHERE id = ?", (todo_id,)
-        ).fetchone()
-        return dict(row)
+    tasks.append(new_task)
+    next_id += 1
+
+    return new_task
 
 
-@app.put("/todos/{todo_id}")
-def update_todo(todo_id: int):
-    with get_connection() as conn:
-        cursor = conn.execute(
-            "UPDATE todos SET completed = NOT completed WHERE id = ?",
-            (todo_id,)
-        )
+@app.delete("/todos/{task_id}")
+def delete_todo(task_id: int):
+    for task in tasks:
+        if task["id"] == task_id:
+            tasks.remove(task)
+            return {"message": "Task deleted successfully"}
 
-        if cursor.rowcount == 0:
-            raise HTTPException(status_code=404, detail="Task not found")
-
-        row = conn.execute(
-            "SELECT * FROM todos WHERE id = ?", (todo_id,)
-        ).fetchone()
-        return dict(row)
-
-
-@app.delete("/todos/{todo_id}")
-def delete_todo(todo_id: int):
-    with get_connection() as conn:
-        cursor = conn.execute(
-            "DELETE FROM todos WHERE id = ?", (todo_id,)
-        )
-
-        if cursor.rowcount == 0:
-            raise HTTPException(status_code=404, detail="Task not found")
-
-    return {"message": "Task deleted successfully"}
+    raise HTTPException(status_code=404, detail="Task not found")
